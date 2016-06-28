@@ -10,7 +10,7 @@
 module Paperclip
   class Watermark < Processor
     # Handles watermarking of images that are uploaded.
-    attr_accessor :current_geometry, :target_geometry, :format, :whiny, :convert_options, :watermark_path, :overlay, :position
+    attr_accessor :current_geometry, :target_geometry, :format, :whiny, :convert_options, :watermark_path, :overlay, :position, :dim
 
     def initialize file, options = {}, attachment = nil
       super
@@ -27,6 +27,7 @@ module Paperclip
       @watermark_path   = options[:watermark_path]
       @position         = options[:position].nil? ? "SouthEast" : options[:position]
       @overlay          = options[:overlay].nil? ? true : false
+      @dim              = options[:geometry]
       @current_format   = File.extname(@file.path)
       @basename         = File.basename(@file.path, @current_format)
     end
@@ -84,14 +85,18 @@ module Paperclip
     def transformation_command
       if @target_geometry.present?
         scale, crop = @current_geometry.transformation_to(@target_geometry, crop?)
-        trans = %W[-resize #{scale}]
-        trans += %W[-crop #{crop} +repage] if crop
+        # trans = %W[-resize #{scale}]
+        # trans += %W[-crop #{crop} +repage] if crop
+        trans = %W[-resize #{@dim}^]
+        trans += %W[-gravity center -background white -extent #{@dim}^]
         trans += [*convert_options] if convert_options?
         trans
       else
         scale, crop = @current_geometry.transformation_to(@current_geometry, crop?)
-        trans = %W[-resize #{scale}]
-        trans += %W[-crop #{crop} +repage] if crop
+        trans = %W[-resize #{@dim}^]
+        trans += %W[-gravity center -background white -extent #{@dim}^]
+        # trans = %W[-resize #{scale}]
+        # trans += %W[-crop #{crop} +repage] if crop
         trans += [*convert_options] if convert_options?
         trans
       end
